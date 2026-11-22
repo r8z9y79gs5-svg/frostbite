@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>FrostBite Online</title>
   <style>
-    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
     body { margin: 0; font-family: sans-serif; color: #e0f7fa; text-align: center; background: radial-gradient(circle at top, #0a2540 0%, #030914 100%); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
     #snow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
     header { position: relative; z-index: 20; padding: 10px 14px; background: rgba(10, 28, 52, 0.85); border-bottom: 2px solid #00f3ff; display: flex; justify-content: space-between; align-items: center; }
@@ -33,10 +33,10 @@
     .me { color: #4cd964; font-weight: bold; }
     #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 9, 20, 0.97); justify-content: center; align-items: center; flex-direction: column; z-index: 1000; padding: 6px; touch-action: none; }
     .stats { display: flex; gap: 14px; font-size: 15px; margin-bottom: 5px; color: #00f3ff; font-weight: bold; }
-    #game { background: #000; border: 3px solid #00f3ff; max-width: 94vw; max-height: 50vh; aspect-ratio: 1/1; }
-    .pad { display: none; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 54px); gap: 7px; margin-top: 8px; justify-content: center; }
-    @media (hover: none) and (pointer: coarse) { .pad { display: grid; } }
-    .d-btn { background: rgba(0, 243, 255, 0.1); color: #00f3ff; border: 2px solid #00f3ff; border-radius: 12px; font-size: 20px; display: flex; justify-content: center; align-items: center; }
+    #game { background: #000; border: 3px solid #00f3ff; max-width: 90vw; max-height: 44vh; aspect-ratio: 1/1; }
+    .pad { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(2, 64px); gap: 10px; margin-top: 10px; justify-content: center; }
+    .d-btn { background: rgba(0, 243, 255, 0.15); color: #00f3ff; border: 2px solid #00f3ff; border-radius: 14px; font-size: 24px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+    .d-btn:active { background: #00f3ff; color: #030914; }
     .up { grid-column: 2; grid-row: 1; } .left { grid-column: 1; grid-row: 2; } .down { grid-column: 2; grid-row: 2; } .right { grid-column: 3; grid-row: 2; }
   </style>
 </head>
@@ -85,16 +85,17 @@
     <div class="stats"><span id="score">Счёт: 0</span><span id="game-best">Рекорд: 0</span></div>
     <canvas id="game" width="800" height="800"></canvas>
     <div class="pad">
-      <button type="button" class="d-btn up" onpointerdown="dir('U')">▲</button>
-      <button type="button" class="d-btn left" onpointerdown="dir('L')">◀</button>
-      <button type="button" class="d-btn down" onpointerdown="dir('D')">▼</button>
-      <button type="button" class="d-btn right" onpointerdown="dir('R')">▶</button>
+      <button type="button" class="d-btn up" ontouchstart="event.preventDefault();dir('U')" onclick="dir('U')">▲</button>
+      <button type="button" class="d-btn left" ontouchstart="event.preventDefault();dir('L')" onclick="dir('L')">◀</button>
+      <button type="button" class="d-btn down" ontouchstart="event.preventDefault();dir('D')" onclick="dir('D')">▼</button>
+      <button type="button" class="d-btn right" ontouchstart="event.preventDefault();dir('R')" onclick="dir('R')">▶</button>
     </div>
     <div style="margin-top: 8px;">
       <button type="button" class="btn" id="restart-btn" onclick="start()">Заново</button>
       <button type="button" class="btn btn-close" onclick="closeGame()">Выход</button>
     </div>
   </div>
+
   <script>
 
     const SB_URL = 'https://supabase.co';
