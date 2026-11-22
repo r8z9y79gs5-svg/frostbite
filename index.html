@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FrostBite Online</title>
+  <style>
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    body { margin: 0; font-family: sans-serif; color: #e0f7fa; text-align: center; background: radial-gradient(circle at top, #0a2540 0%, #030914 100%); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    #snow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+    header { position: relative; z-index: 20; padding: 10px 14px; background: rgba(10, 28, 52, 0.85); border-bottom: 2px solid #00f3ff; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { margin: 0; font-size: 19px; text-shadow: 0 0 10px #00f3ff; letter-spacing: 1px; }
+    .w-btn { background: rgba(0, 243, 255, 0.15); border: 1px solid #00f3ff; color: #00f3ff; padding: 5px 10px; border-radius: 10px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    main { position: relative; z-index: 10; flex: 1; display: flex; justify-content: center; align-items: center; padding: 10px; }
+    .card { background: rgba(16, 42, 76, 0.65); border: 1px solid rgba(0, 243, 255, 0.4); border-radius: 20px; padding: 14px; max-width: 410px; width: 100%; }
+    input { width: 100%; padding: 9px; margin: 4px 0; border-radius: 10px; border: 1px solid #00f3ff; background: rgba(3, 9, 20, 0.8); color: #fff; font-size: 14px; outline: none; user-select: text; -webkit-user-select: text; }
+    .btn { background: rgba(0, 243, 255, 0.15); color: #fff; border: 2px solid #00f3ff; padding: 10px 16px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 12px; margin: 4px; }
+    .btn:active, .btn:hover { background: #00f3ff; color: #030914; }
+    .btn-sm { padding: 7px 12px; font-size: 13px; border-width: 1px; }
+    .btn-close { border-color: #ff2a6d; background: rgba(255, 42, 109, 0.15); }
+    .user-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(0, 243, 255, 0.1); padding: 6px 10px; border-radius: 12px; margin-bottom: 8px; border: 1px solid rgba(0, 243, 255, 0.3); font-size: 13px; }
+    .opt-row { display: flex; gap: 5px; justify-content: center; margin: 6px 0; flex-wrap: wrap; }
+    .chip { padding: 5px 9px; font-size: 12px; border-radius: 8px; border: 1px solid rgba(0,243,255,0.4); background: rgba(3,9,20,0.6); color: #80deea; cursor: pointer; font-weight: bold; }
+    .chip.act { background: #00f3ff; color: #030914; border-color: #00f3ff; }
+    .skins { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin: 8px 0; }
+    .skin-item { padding: 6px 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(3,9,20,0.6); font-size: 11px; cursor: pointer; }
+    .skin-item.eq { border: 2px solid #4cd964; background: rgba(76, 217, 100, 0.15); }
+    .mp-box { background: rgba(255, 42, 109, 0.12); border: 1px dashed #ff2a6d; border-radius: 12px; padding: 8px; margin: 8px 0; }
+    .mp-row { display: flex; gap: 6px; align-items: center; justify-content: center; margin-top: 5px; }
+    .lb { margin-top: 10px; text-align: left; background: rgba(3, 9, 20, 0.65); border-radius: 12px; padding: 8px 12px; border: 1px solid rgba(0, 243, 255, 0.25); }
+    .lb h3 { margin: 0 0 5px; font-size: 13px; color: #00f3ff; text-align: center; }
+    .lb-row { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 12px; }
+    .me { color: #4cd964; font-weight: bold; }
+    #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 9, 20, 0.97); justify-content: center; align-items: center; flex-direction: column; z-index: 1000; padding: 6px; touch-action: none; }
+    .stats { display: flex; gap: 14px; font-size: 15px; margin-bottom: 5px; color: #00f3ff; font-weight: bold; }
+    #game { background: #000; border: 3px solid #00f3ff; max-width: 94vw; max-height: 50vh; aspect-ratio: 1/1; }
+    .pad { display: none; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 54px); gap: 7px; margin-top: 8px; justify-content: center; }
+    @media (hover: none) and (pointer: coarse) { .pad { display: grid; } }
+    .d-btn { background: rgba(0, 243, 255, 0.1); color: #00f3ff; border: 2px solid #00f3ff; border-radius: 12px; font-size: 20px; display: flex; justify-content: center; align-items: center; }
+    .up { grid-column: 2; grid-row: 1; } .left { grid-column: 1; grid-row: 2; } .down { grid-column: 2; grid-row: 2; } .right { grid-column: 3; grid-row: 2; }
+  </style>
+</head>
+<body>
+  <canvas id="snow"></canvas>
+  <header>
+    <h1><span onclick="giveBonus()" style="cursor:pointer;">❄️</span> FrostBite Online ❄️</h1>
+    <button type="button" class="w-btn" id="weather-btn" onclick="toggleWeather()">🌨️ Снег</button>
+  </header>
+  <main>
+    <div class="card">
+      <div id="auth-box">
+        <h3 style="margin:0 0 6px;color:#00f3ff;font-size:16px;">Вход / Регистрация</h3>
+        <input type="text" id="inp-name" placeholder="Никнейм" maxlength="14">
+        <input type="password" id="inp-pass" placeholder="Пароль" maxlength="16">
+        <div id="auth-err" style="color:#ff5252;font-size:12px;min-height:15px;"></div>
+        <button type="button" class="btn btn-sm" onclick="doLogin()">Войти / Создать акк</button>
+      </div>
+      <div id="menu-box" style="display:none;">
+        <div class="user-bar">
+          <span>👤 <b id="cur-user"></b> | 🍎 <b id="my-coins">0</b></span>
+          <button type="button" class="btn btn-sm btn-close" onclick="doLogout()" style="margin:0;padding:3px 8px;">Выйти</button>
+        </div>
+        <div class="opt-row" id="speed-row">
+          <span class="chip" onclick="setSpeed(150, this)">🐢 Медленно</span>
+          <span class="chip act" onclick="setSpeed(110, this)">🐍 Норма</span>
+          <span class="chip" onclick="setSpeed(70, this)">⚡ Хардкор</span>
+          <span class="chip" id="wall-chip" onclick="toggleWalls()">🧱 Стены: ВКЛ</span>
+        </div>
+        <div class="skins" id="skins-box"></div>
+        <button type="button" class="btn" id="start-btn" onclick="openSolo()" style="width:95%;">▶️ Одиночная игра</button>
+        <div class="mp-box">
+          <div style="font-size:12px;color:#ff80ab;font-weight:bold;">⚔️ Сетевая охота (Supabase 1 на 1)</div>
+          <div class="mp-row">
+            <button type="button" class="btn btn-sm" onclick="createRoom()" style="margin:0;">Создать комнату</button>
+            <input type="text" id="inp-room" placeholder="Код" maxlength="4" style="width:72px;margin:0;text-align:center;padding:6px;">
+            <button type="button" class="btn btn-sm" onclick="joinRoom()" style="margin:0;">Войти</button>
+          </div>
+          <div id="mp-status" style="font-size:11px;color:#ffd700;margin-top:4px;"></div>
+        </div>
+      </div>
+      <div class="lb"><h3>🏆 Таблица лидеров</h3><div id="lb-list"></div></div>
+    </div>
+  </main>
+  <div id="modal">
+    <div class="stats"><span id="score">Счёт: 0</span><span id="game-best">Рекорд: 0</span></div>
+    <canvas id="game" width="800" height="800"></canvas>
+    <div class="pad">
+      <button type="button" class="d-btn up" onpointerdown="dir('U')">▲</button>
+      <button type="button" class="d-btn left" onpointerdown="dir('L')">◀</button>
+      <button type="button" class="d-btn down" onpointerdown="dir('D')">▼</button>
+      <button type="button" class="d-btn right" onpointerdown="dir('R')">▶</button>
+    </div>
+    <div style="margin-top: 8px;">
+      <button type="button" class="btn" id="restart-btn" onclick="start()">Заново</button>
+      <button type="button" class="btn btn-close" onclick="closeGame()">Выход</button>
+    </div>
+  </div>
+  <script>
+
+    const SB_URL = 'https://supabase.co';
+    const SB_KEY = 'sb_publishable_gcv8aexcCBz1kLHFzsI0gQ_4mLNXfaj';
+
+    const HDR = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
+    const sbReady = () => SB_URL.startsWith('http') && !SB_URL.includes('ВАШ-ПРОЕКТ');
+
+    function dbGet(id) {
+      if (!sbReady()) return Promise.resolve(null);
+      return fetch(`${SB_URL}/rest/v1/kv?id=eq.${id}&select=val`, { headers: HDR })
+        .then(r => r.json()).then(d => (d && d.at(0)) ? d.at(0).val : null).catch(() => null);
+    }
+    function dbSet(id, val) {
+      if (!sbReady()) return Promise.resolve();
+      return fetch(`${SB_URL}/rest/v1/kv`, { method: 'POST', headers: HDR, body: JSON.stringify({ id, val }) }).catch(() => {});
+    }
+
+    const sc = document.getElementById('snow'), sctx = sc.getContext('2d'), startBtn = document.getElementById('start-btn');
+    let flakes = [], bottomPile = [], btnPile = [], step = 4, weather = 1;
+    function initSnow() {
+      sc.width = window.innerWidth || 360; sc.height = window.innerHeight || 640;
+      bottomPile = new Array(Math.ceil(sc.width / step) + 2).fill(0);
+      btnPile = new Array(Math.ceil((startBtn.offsetWidth || 200) / step) + 2).fill(0);
+    }
+    window.addEventListener('resize', initSnow); initSnow();
+    for (let i = 0; i < 200; i++) flakes.push({ x: Math.random()*sc.width, y: Math.random()*sc.height, r: Math.random()*2.5+1.1, s: Math.random()*1.5+0.8, d: Math.random()*0.6-0.3 });
+    function toggleWeather() {
+      weather = (weather + 1) % 3;
+      document.getElementById('weather-btn').innerText = ['☀️ Без снега', '🌨️ Снег', '🌪️ Метель'].at(weather);
+      if (weather === 0) { bottomPile.fill(0); btnPile.fill(0); sctx.clearRect(0, 0, sc.width, sc.height); }
+    }
+    function addSnow(p, idx, maxH, inc) {
+      if (idx < 0 || idx >= p.length) return;
+      if (p.at(idx) < maxH) p.splice(idx, 1, p.at(idx) + inc);
+      if (idx > 0 && p.at(idx) - p.at(idx - 1) > 4) p.splice(idx - 1, 1, p.at(idx - 1) + inc * 0.5);
+      if (idx < p.length - 1 && p.at(idx) - p.at(idx + 1) > 4) p.splice(idx + 1, 1, p.at(idx + 1) + inc * 0.5);
+    }
+    function drawPile(p, bx, by, w) {
+      if (!p.length || w <= 0) return;
+      sctx.fillStyle = '#e8fbff'; sctx.beginPath(); sctx.moveTo(bx, by);
+      for (let i = 0; i < p.length; i++) sctx.lineTo(Math.min(bx + i * step, bx + w), by - p.at(i));
+      sctx.lineTo(bx + w, by); sctx.closePath(); sctx.fill();
+    }
+    function snow() {
+      if (weather > 0) {
+        sctx.clearRect(0, 0, sc.width, sc.height);
+        const r = startBtn.getBoundingClientRect(), mult = weather === 2 ? 2.2 : 1, count = weather === 2 ? 200 : 110;
+        sctx.fillStyle = 'rgba(230, 250, 255, 0.9)';
+        for (let i = 0; i < count; i++) {
+          const f = flakes.at(i); sctx.beginPath(); sctx.arc(f.x, f.y, f.r, 0, 7); sctx.fill();
+          f.y += f.s * mult; f.x += f.d * (weather === 2 ? 3.5 : 1);
+          if (r.width > 0 && f.x >= r.left+4 && f.x <= r.right-4 && f.y >= r.top-2 && f.y <= r.top+8) { addSnow(btnPile, Math.floor((f.x - r.left)/step), 18, 1.5); f.y = -5; f.x = Math.random()*sc.width; }
+          const bi = Math.floor(f.x/step), ch = (bi >= 0 && bi < bottomPile.length) ? bottomPile.at(bi) : 0;
+          if (f.y >= sc.height - ch) { addSnow(bottomPile, bi, 100, 2); f.y = -5; f.x = Math.random()*sc.width; }
+          if (f.x > sc.width) f.x = 0; if (f.x < 0) f.x = sc.width;
+        }
+        if (r.width > 0) drawPile(btnPile, r.left+3, r.top+2, r.width-6);
+        drawPile(bottomPile, 0, sc.height, sc.width);
+      }
+      requestAnimationFrame(snow);
+    }
+    snow();
+
+    const SKINS = [{ id: 'green', name: 'Классика', price: 0, head: '#4cd964', body: '#28a745' }, { id: 'ice', name: 'Лёд', price: 15, head: '#ffffff', body: '#00f3ff' }, { id: 'gold', name: 'Золото', price: 35, head: '#fff59d', body: '#ffd700' }, { id: 'neon', name: 'Неон', price: 60, head: '#ff80ab', body: '#ff2a6d' }];
+    let users = JSON.parse(localStorage.getItem('fb_sb_u') || '{}'), curUser = localStorage.getItem('fb_sb_c') || '';
+
+    async function syncUsers() {
+      const remote = await dbGet('all_users');
+      if (remote) { users = Object.assign({}, users, remote); localStorage.setItem('fb_sb_u', JSON.stringify(users)); renderUI(); }
+    }
+    function saveUsers() {
+      localStorage.setItem('fb_sb_u', JSON.stringify(users));
+      dbSet('all_users', users);
+    }
+    function selectSkin(id) {
+      const u = Reflect.get(users, curUser), s = SKINS.find(x => x.id === id);
+      if (u.owned.includes(s.id)) { u.skin = s.id; saveUsers(); renderUI(); }
+      else if (u.coins >= s.price) { u.coins -= s.price; u.owned += ',' + s.id; u.skin = s.id; saveUsers(); renderUI(); }
+    }
+    function renderUI() {
+      const auth = document.getElementById('auth-box'), menu = document.getElementById('menu-box');
+      if (curUser && Reflect.get(users, curUser)) {
+        const u = Reflect.get(users, curUser);
+        if (!u.owned) u.owned = 'green'; if (!u.skin) u.skin = 'green'; if (u.coins === undefined) u.coins = 0;
+        auth.style.display = 'none'; menu.style.display = 'block';
+        document.getElementById('cur-user').innerText = curUser; document.getElementById('my-coins').innerText = u.coins; document.getElementById('game-best').innerText = 'Рекорд: ' + u.best;
+        document.getElementById('skins-box').innerHTML = SKINS.map(s => {
+          const has = u.owned.includes(s.id), eq = u.skin === s.id;
+          return `<div class="skin-item ${eq ? 'eq' : ''}" onclick="selectSkin('${s.id}')"><div style="width:14px;height:14px;background:${s.body};margin:0 auto 3px;border-radius:4px;"></div><b>${s.name}</b><br>${eq ? 'Выбран' : (has ? 'Надеть' : s.price + ' 🍎')}</div>`;
+        }).join('');
+        setTimeout(initSnow, 50);
+      } else { auth.style.display = 'block'; menu.style.display = 'none'; }
+      const list = Object.entries(users).map(e => ({ name: e.at(0), best: e.at(1).best })).sort((a, b) => b.best - a.best).slice(0, 5);
+      document.getElementById('lb-list').innerHTML = list.length ? list.map((x, i) => `<div class="lb-row ${x.name === curUser ? 'me' : ''}"><span>${i+1}. ${x.name}</span><b>${x.best} 🍎</b></div>`).join('') : '<div style="text-align:center;color:#888;font-size:12px;">Нет рекордов</div>';
+    }
+    async function doLogin() {
+      const name = document.getElementById('inp-name').value.trim(), pass = document.getElementById('inp-pass').value.trim(), err = document.getElementById('auth-err');
+      if (!name || !pass) { err.innerText = 'Введите ник и пароль!'; return; }
+      err.innerText = 'Загрузка...'; await syncUsers();
+      const ex = Reflect.get(users, name);
+      if (ex) { if (ex.pass !== pass) { err.innerText = 'Неверный пароль!'; return; } }
+      else { Reflect.set(users, name, { pass, best: 0, coins: 0, owned: 'green', skin: 'green' }); saveUsers(); }
+      err.innerText = ''; curUser = name; localStorage.setItem('fb_sb_c', curUser); renderUI();
+    }
+    function doLogout() { curUser = ''; localStorage.removeItem('fb_sb_c'); btnPile.fill(0); renderUI(); }
+    function giveBonus() {
+      if (!curUser || !Reflect.get(users, curUser)) { alert('Сначала войдите в аккаунт!'); return; }
+      const u = Reflect.get(users, curUser); u.coins = (u.coins || 0) + 250; saveUsers(); renderUI();
+    }
+    renderUI(); syncUsers();
+    let gameSpeed = 110, useWalls = true, mpRole = '', roomCode = '', mpSync = null, lootClaimed = false;
+    function setSpeed(s, el) { document.querySelectorAll('#speed-row .chip').forEach(x => { if (x.id !== 'wall-chip') x.classList.remove('act'); }); el.classList.add('act'); gameSpeed = s; }
+    function toggleWalls() { useWalls = !useWalls; const wc = document.getElementById('wall-chip'); wc.innerText = useWalls ? '🧱 Стены: ВКЛ' : '🌀 Без стен'; wc.classList.toggle('act', !useWalls); }
+
+    const modal = document.getElementById('modal'), cv = document.getElementById('game'), ctx = cv.getContext('2d'), scoreEl = document.getElementById('score');
+    const GRID = 40, CELL = 20;
+    let snake = [], enemy = [], loot = [], food = { x: 20, y: 20 }, gold = null, particles = [], eaten = 0, dx = 1, dy = 0, edx = -1, edy = 0, score = 0, escore = 0, loop = null, lock = false;
+
+    function openSolo() { mpRole = ''; document.getElementById('restart-btn').style.display = 'inline-block'; btnPile.fill(0); modal.style.display = 'flex'; start(); }
+    function closeGame() { modal.style.display = 'none'; clearInterval(loop); clearInterval(mpSync); mpRole = ''; syncUsers(); renderUI(); }
+
+    function start() {
+      snake = mpRole === 'guest' ? [{ x: 32, y: 20 }, { x: 33, y: 20 }, { x: 34, y: 20 }] : [{ x: 7, y: 20 }, { x: 6, y: 20 }, { x: 5, y: 20 }];
+      dx = mpRole === 'guest' ? -1 : 1; dy = 0; score = 0; escore = 0; eaten = 0; gold = null; loot = []; particles = []; lock = false; lootClaimed = false;
+      enemy = mpRole ? [{ x: 32, y: 20 }, { x: 33, y: 20 }, { x: 34, y: 20 }] : [];
+      scoreEl.innerText = mpRole ? 'Вы: 0 | Враг: 0' : 'Счёт: 0';
+      if (mpRole !== 'guest') spawn();
+      if (loop) clearInterval(loop);
+      loop = setInterval(tick, mpRole ? 140 : gameSpeed);
+    }
+
+    function spawn() { food.x = Math.floor(Math.random() * GRID); food.y = Math.floor(Math.random() * GRID); if (snake.some(p => p.x === food.x && p.y === food.y) || enemy.some(p => p.x === food.x && p.y === food.y)) spawn(); }
+    function spawnGold() { gold = { x: Math.floor(Math.random() * GRID), y: Math.floor(Math.random() * GRID), ttl: 80 }; if (snake.some(p => p.x === gold.x && p.y === gold.y) || (gold.x === food.x && gold.y === food.y)) spawnGold(); }
+    function addBurst(gx, gy, color) { for (let i = 0; i < 10; i++) { const ang = Math.random() * 6.28, spd = Math.random() * 3 + 1; particles.push({ x: gx * CELL + 10, y: gy * CELL + 10, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, life: 12, color }); } }
+    function addPoints(pts) {
+      const u = Reflect.get(users, curUser); score += pts; u.coins += pts;
+      scoreEl.innerText = mpRole ? `Вы: ${score} | Враг: ${escore}` : 'Счёт: ' + score;
+      if (score > u.best) { u.best = score; document.getElementById('game-best').innerText = 'Рекорд: ' + score; }
+      saveUsers();
+    }
+    function drawApple(gx, gy, isLoot) {
+      const cx = gx * CELL + 10, cy = gy * CELL + 11;
+      ctx.fillStyle = isLoot ? '#ff9500' : '#ff2d20'; ctx.beginPath(); ctx.arc(cx, cy, isLoot ? 7 : 8, 0, 7); ctx.fill();
+      ctx.fillStyle = '#4cd964'; ctx.beginPath(); ctx.ellipse(cx + 2, cy - 8, 4, 2, -0.5, 0, 7); ctx.fill();
+    }
+    function drawSnakeArr(arr, sk, sdx, sdy) {
+      for (let i = arr.length - 1; i >= 0; i--) {
+        const p = arr.at(i), cx = p.x * CELL + 10, cy = p.y * CELL + 10, isHead = i === 0, rad = isHead ? 9.5 : (i === arr.length - 1 ? 6 : 8.5);
+        ctx.fillStyle = isHead ? sk.head : sk.body; ctx.beginPath(); ctx.arc(cx, cy, rad, 0, 7); ctx.fill();
+        if (isHead) {
+          const ex1 = cx + sdx * 3 - sdy * 4, ey1 = cy + sdy * 3 + sdx * 4, ex2 = cx + sdx * 3 + sdy * 4, ey2 = cy + sdy * 3 - sdx * 4;
+          ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ex1, ey1, 2.5, 0, 7); ctx.arc(ex2, ey2, 2.5, 0, 7); ctx.fill();
+          ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(ex1 + sdx, ey1 + sdy, 1.2, 0, 7); ctx.arc(ex2 + sdx, ey2 + sdy, 1.2, 0, 7); ctx.fill();
+        }
+      }
+    }
+    function showEnd(title) {
+      clearInterval(loop); clearInterval(mpSync);
+      ctx.fillStyle = 'rgba(3,9,20,0.85)'; ctx.fillRect(0, 0, 800, 800);
+      ctx.fillStyle = '#ff2a6d'; ctx.font = 'bold 40px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(title, 400, 380);
+      ctx.fillStyle = '#fff'; ctx.font = '24px sans-serif'; ctx.fillText(`Итоговый счёт: ${score}`, 400, 435);
+    }
+    function tick() {
+      const h = snake.at(0), u = Reflect.get(users, curUser); let nx = h.x + dx, ny = h.y + dy;
+      if (!useWalls && !mpRole) { if (nx < 0) nx = GRID - 1; if (nx >= GRID) nx = 0; if (ny < 0) ny = GRID - 1; if (ny >= GRID) ny = 0; }
+      const hitWall = (useWalls || mpRole) && (nx < 0 || nx >= GRID || ny < 0 || ny >= GRID);
+      const hitSelf = snake.some((p, i) => i > 0 && p.x === nx && p.y === ny);
+      const hitEnemy = mpRole && !lootClaimed && enemy.some(p => p.x === nx && p.y === ny);
+
+      if (hitWall || hitSelf || hitEnemy) {
+        if (mpRole) dbSet(`room_${roomCode}_${mpRole}`, { body: snake, score, dead: true });
+        showEnd(mpRole ? 'Вы погибли! Очки достались врагу' : 'Игра окончена!'); return;
+      }
+      lock = false; snake.unshift({ x: nx, y: ny });
+      if (gold && !mpRole) { gold.ttl -= 1; if (nx === gold.x && ny === gold.y) { addPoints(3); addBurst(gold.x, gold.y, '#ffd700'); gold = null; } else if (gold.ttl <= 0) gold = null; }
+      const lIdx = loot.findIndex(p => p.x === nx && p.y === ny);
+      if (lIdx !== -1) { loot.splice(lIdx, 1); addPoints(1); addBurst(nx, ny, '#ffd700'); }
+      else if (nx === food.x && ny === food.y) {
+        addPoints(1); addBurst(food.x, food.y, '#ff3b30'); eaten += 1;
+        if (mpRole === 'host') { spawn(); dbSet(`room_${roomCode}_food`, food); }
+        else if (!mpRole) { spawn(); if (eaten % 5 === 0 && !gold) spawnGold(); }
+      } else snake.pop();
+
+      if (mpRole) dbSet(`room_${roomCode}_${mpRole}`, { body: snake, dx, dy, score, dead: false });
+
+      ctx.fillStyle = '#040d1a'; ctx.fillRect(0, 0, 800, 800); ctx.strokeStyle = 'rgba(0, 243, 255, 0.05)'; ctx.lineWidth = 1;
+      for (let i = 0; i <= 800; i += CELL) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 800); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(800, i); ctx.stroke(); }
+      drawApple(food.x, food.y, false); loot.forEach(lp => drawApple(lp.x, lp.y, true));
+      if (gold) { ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(gold.x * CELL + 10, gold.y * CELL + 10, 8, 0, 7); ctx.fill(); }
+      drawSnakeArr(snake, SKINS.find(x => x.id === u.skin) || SKINS.at(0), dx, dy);
+      if (mpRole && !lootClaimed && enemy.length) drawSnakeArr(enemy, { head: '#ff80ab', body: '#ff2a6d' }, edx, edy);
+      particles.forEach(pt => { pt.x += pt.vx; pt.y += pt.vy; pt.life -= 1; ctx.fillStyle = pt.color; ctx.fillRect(pt.x, pt.y, 3, 3); });
+      particles = particles.filter(pt => pt.life > 0);
+    }
+
+    async function startMP(role, code) {
+      const st = document.getElementById('mp-status');
+      if (!sbReady()) { st.innerText = 'Сначала впишите URL и ключ Supabase в Часть 2!'; return; }
+      mpRole = role; roomCode = code; btnPile.fill(0);
+      const other = role === 'host' ? 'guest' : 'host';
+      modal.style.display = 'flex'; document.getElementById('restart-btn').style.display = 'none';
+      start();
+      if (role === 'host') await dbSet(`room_${code}_food`, food);
+      mpSync = setInterval(async () => {
+        if (role === 'guest') { const rf = await dbGet(`room_${code}_food`); if (rf) food = rf; }
+        const opp = await dbGet(`room_${code}_${other}`);
+        if (opp && opp.body) {
+          if (opp.dead && !lootClaimed) {
+            lootClaimed = true; const stolen = (opp.score || 0) + 5; addPoints(stolen);
+            opp.body.forEach(seg => { loot.push({ x: seg.x, y: seg.y }); addBurst(seg.x, seg.y, '#ffd700'); });
+            enemy = []; scoreEl.innerText = `Враг повержен! +${stolen} 🍎 | Счёт: ${score}`;
+          } else if (!opp.dead) {
+            enemy = opp.body; edx = opp.dx; edy = opp.dy; escore = opp.score || 0;
+            scoreEl.innerText = `Вы: ${score} | Враг: ${escore}`;
+          }
+        }
+      }, 220);
+    }
+    function createRoom() { const code = String(Math.floor(1000 + Math.random() * 9000)); document.getElementById('mp-status').innerText = 'Код комнаты: ' + code; startMP('host', code); }
+    function joinRoom() { const code = document.getElementById('inp-room').value.trim(); if (code.length < 4) { document.getElementById('mp-status').innerText = 'Введите 4 цифры кода!'; return; } startMP('guest', code); }
+
+    function dir(d) {
+      if (lock) return;
+      if (d === 'L' && dx !== 1) { dx = -1; dy = 0; lock = true; } if (d === 'U' && dy !== 1) { dx = 0; dy = -1; lock = true; }
+      if (d === 'R' && dx !== -1) { dx = 1; dy = 0; lock = true; } if (d === 'D' && dy !== -1) { dx = 0; dy = 1; lock = true; }
+    }
+    document.onkeydown = e => {
+      if (modal.style.display !== 'flex') return; const k = e.key.toLowerCase();
+      if (k === 'arrowleft' || k === 'a' || k === 'ф') dir('L'); if (k === 'arrowup' || k === 'w' || k === 'ц') dir('U');
+      if (k === 'arrowright' || k === 'd' || k === 'в') dir('R'); if (k === 'arrowdown' || k === 's' || k === 'ы') dir('D');
+    };
+    let tx = 0, ty = 0;
+    modal.ontouchstart = e => { tx = e.changedTouches.item(0).screenX; ty = e.changedTouches.item(0).screenY; };
+    modal.ontouchend = e => {
+      const dx2 = e.changedTouches.item(0).screenX - tx, dy2 = e.changedTouches.item(0).screenY - ty;
+      if (Math.abs(dx2) > 30 || Math.abs(dy2) > 30) Math.abs(dx2) > Math.abs(dy2) ? dir(dx2 > 0 ? 'R' : 'L') : dir(dy2 > 0 ? 'D' : 'U');
+    };
+  </script>
+</body>
+</html>
